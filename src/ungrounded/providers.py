@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import os
 import random
+import re
+import sys
 import time
 from typing import Any, Callable, Dict, List, Sequence, Tuple
 
@@ -21,21 +23,56 @@ SYSTEM_PROMPT = (
 TRANSIENT = ("RateLimit", "Overloaded", "APIConnection", "InternalServer", "APITimeout", "Timeout")
 
 
-def _retry(fn: Callable[[], Tuple[List[str], str, str]], attempts: int = 4):
+_UNSUPPORTED = re.compile(r"unexpected keyword argument '([^']+)'")
+
+
+def _retry(fn: Callable[..., Tuple[List[str], str, str]], attempts: int = 4, **kwargs):
+    """Call fn(**kwargs), retrying transient errors.
+
+    Provider SDKs change their signatures between major versions -- anthropic
+    1.0 dropped ``temperature`` from messages.create, for instance. Rather
+    than pinning a version, drop any keyword the SDK rejects and try again,
+    so the same code works across releases.
+    """
     delay = 1.0
-    for i in range(attempts):
+    dropped = []
+    i = 0
+    while i < attempts:
         try:
-            return fn()
+            return fn(**kwargs), dropped
+        except TypeError as e:
+            m = _UNSUPPORTED.search(str(e))
+            if m and m.group(1) in kwargs:
+                dropped.append(kwargs.pop(m.group(1)) is not None and m.group(1))
+                continue  # not an attempt: retry immediately without it
+            return ([], "ERROR", f"TypeError: {e}"), dropped
         except Exception as e:  # noqa: BLE001 - provider SDKs raise many types
             name = type(e).__name__
             if i == attempts - 1 or not any(s in name for s in TRANSIENT):
-                return [], "ERROR", f"{name}: {e}"
+                return ([], "ERROR", f"{name}: {e}"), dropped
             time.sleep(delay + random.random())
             delay = min(delay * 2, 30)
-    return [], "ERROR", "retries exhausted"
+            i += 1
+    return ([], "ERROR", "retries exhausted"), dropped
 
 
-class AnthropicProvider:
+class _DropsUnsupported:
+    """Remembers keyword arguments the installed SDK rejects, and says so once."""
+
+    _unsupported: set
+
+    def _note_dropped(self, dropped):
+        for name in dropped:
+            if name and name not in self._unsupported:
+                self._unsupported.add(name)
+                print(
+                    f"  note: this SDK version does not accept {name!r}; "
+                    "continuing without it (the provider default applies)",
+                    file=sys.stderr,
+                )
+
+
+class AnthropicProvider(_DropsUnsupported):
     def __init__(self, model: str, max_tokens: int = 1024, temperature: float = 1.0, **kw):
         try:
             import anthropic
@@ -46,6 +83,7 @@ class AnthropicProvider:
         self._client = anthropic.Anthropic()
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
         self._extra = kw
+        self._unsupported = set()
 
     def __call__(self, prompt: str, tools: Sequence[Dict[str, Any]]):
         payload = [
@@ -53,23 +91,25 @@ class AnthropicProvider:
             for t in tools
         ]
 
-        def go():
+        def go(**kw):
             r = self._client.messages.create(
                 model=self.model,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
                 system=SYSTEM_PROMPT,
                 tools=payload,
                 messages=[{"role": "user", "content": prompt}],
-                **self._extra,
+                **kw,
             )
             called = [b.name for b in r.content if getattr(b, "type", None) == "tool_use"]
             return called, "OK", ""
 
-        return _retry(go)
+        kw = dict(max_tokens=self.max_tokens, temperature=self.temperature, **self._extra)
+        kw = {k: v for k, v in kw.items() if k not in self._unsupported}
+        out, dropped = _retry(go, **kw)
+        self._note_dropped(dropped)
+        return out
 
 
-class OpenAIProvider:
+class OpenAIProvider(_DropsUnsupported):
     """OpenAI adapter.
 
     Note: reasoning models reject function tools on Chat Completions unless
@@ -88,6 +128,8 @@ class OpenAIProvider:
         self._client = openai.OpenAI()
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
         self._extra = kw
+        self._unsupported = set()
+        self._renamed = set()
 
     def __call__(self, prompt: str, tools: Sequence[Dict[str, Any]]):
         payload = [
@@ -102,22 +144,36 @@ class OpenAIProvider:
             for t in tools
         ]
 
-        def go():
+        def go(**kw):
             r = self._client.chat.completions.create(
                 model=self.model,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
                 tools=payload,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
                 ],
-                **self._extra,
+                **kw,
             )
             calls = r.choices[0].message.tool_calls or []
             return [c.function.name for c in calls], "OK", ""
 
-        return _retry(go)
+        kw = dict(max_tokens=self.max_tokens, temperature=self.temperature, **self._extra)
+        if "max_tokens" in self._renamed:
+            kw["max_completion_tokens"] = kw.pop("max_tokens")
+        kw = {k: v for k, v in kw.items() if k not in self._unsupported}
+        out, dropped = _retry(go, **kw)
+        # Newer OpenAI models reject max_tokens in favour of
+        # max_completion_tokens. Retry under the new name rather than
+        # silently falling back to the model default.
+        if "max_tokens" in dropped and "max_completion_tokens" not in kw:
+            self._renamed.add("max_tokens")
+            self._unsupported.discard("max_tokens")
+            kw.pop("max_tokens", None)
+            kw["max_completion_tokens"] = self.max_tokens
+            out, dropped2 = _retry(go, **kw)
+            dropped = [d for d in dropped if d != "max_tokens"] + list(dropped2)
+        self._note_dropped(dropped)
+        return out
 
 
 class MockProvider:

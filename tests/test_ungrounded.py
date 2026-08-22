@@ -218,3 +218,125 @@ class TestCLI(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestSDKCompat(unittest.TestCase):
+    """Provider SDKs change signatures between majors. Adapters must survive it."""
+
+    def _fake_anthropic(self, rejects):
+        import types
+        class Msgs:
+            def create(self, model=None, system=None, tools=None, messages=None, **kw):
+                for bad in rejects:
+                    if bad in kw:
+                        raise TypeError(
+                            f"Messages.create() got an unexpected keyword argument '{bad}'")
+                return types.SimpleNamespace(
+                    content=[types.SimpleNamespace(type="tool_use", name=tools[0]["name"])])
+        class Client:
+            def __init__(self, *a, **k): self.messages = Msgs()
+        mod = types.ModuleType("anthropic"); mod.Anthropic = Client
+        return mod
+
+    def test_drops_rejected_kwarg_and_recovers(self):
+        import sys, os
+        sys.modules["anthropic"] = self._fake_anthropic({"temperature"})
+        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        from ungrounded.providers import AnthropicProvider
+        p = AnthropicProvider(model="claude-sonnet-4-6")
+        tools = [{"name": "fetch_url", "description": "d",
+                  "parameters": {"type": "object", "properties": {}}}]
+        called, status, err = p("hello", tools)
+        self.assertEqual(status, "OK")
+        self.assertEqual(called, ["fetch_url"])
+        self.assertIn("temperature", p._unsupported)
+        del sys.modules["anthropic"]
+
+    def test_drops_several_rejected_kwargs(self):
+        import sys, os
+        sys.modules["anthropic"] = self._fake_anthropic({"temperature", "max_tokens"})
+        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        from ungrounded.providers import AnthropicProvider
+        p = AnthropicProvider(model="claude-sonnet-4-6")
+        tools = [{"name": "fetch_url", "description": "d",
+                  "parameters": {"type": "object", "properties": {}}}]
+        _, status, _ = p("hello", tools)
+        self.assertEqual(status, "OK")
+        del sys.modules["anthropic"]
+
+    def test_real_typeerror_still_reported(self):
+        import sys, os, types
+        class Msgs:
+            def create(self, **kw):
+                raise TypeError("something genuinely wrong")
+        class Client:
+            def __init__(self, *a, **k): self.messages = Msgs()
+        mod = types.ModuleType("anthropic"); mod.Anthropic = Client
+        sys.modules["anthropic"] = mod
+        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        from ungrounded.providers import AnthropicProvider
+        p = AnthropicProvider(model="claude-sonnet-4-6")
+        _, status, err = p("hello", [{"name": "x", "description": "d",
+                                      "parameters": {"type": "object", "properties": {}}}])
+        self.assertEqual(status, "ERROR")
+        self.assertIn("something genuinely wrong", err)
+        del sys.modules["anthropic"]
+
+
+class TestOpenAICompat(unittest.TestCase):
+    """Newer OpenAI models renamed max_tokens to max_completion_tokens."""
+
+    def _fake_openai(self, rejects, expect_new_name=True):
+        import types
+        seen = {}
+        class Comp:
+            def create(self, model=None, tools=None, messages=None, **kw):
+                seen.update(kw)
+                for bad in rejects:
+                    if bad in kw:
+                        raise TypeError(
+                            f"create() got an unexpected keyword argument '{bad}'")
+                fn = types.SimpleNamespace(name=tools[0]["function"]["name"])
+                msg = types.SimpleNamespace(
+                    tool_calls=[types.SimpleNamespace(function=fn)])
+                return types.SimpleNamespace(
+                    choices=[types.SimpleNamespace(message=msg)])
+        mod = types.ModuleType("openai")
+        mod.OpenAI = lambda *a, **k: types.SimpleNamespace(
+            chat=types.SimpleNamespace(completions=Comp()))
+        return mod, seen
+
+    def test_renames_max_tokens(self):
+        import sys, os
+        mod, seen = self._fake_openai({"max_tokens", "temperature"})
+        sys.modules["openai"] = mod
+        os.environ["OPENAI_API_KEY"] = "sk-test"
+        from ungrounded.providers import OpenAIProvider
+        p = OpenAIProvider(model="gpt-5.6-terra", max_tokens=1024)
+        tools = [{"name": "fetch_url", "description": "d",
+                  "parameters": {"type": "object", "properties": {}}}]
+        called, status, err = p("hello", tools)
+        self.assertEqual(status, "OK", err)
+        self.assertEqual(called, ["fetch_url"])
+        self.assertEqual(seen.get("max_completion_tokens"), 1024,
+                         "token budget must survive the rename, not be dropped")
+        # second call goes straight to the new name
+        seen.clear()
+        p("hello again", tools)
+        self.assertEqual(seen.get("max_completion_tokens"), 1024)
+        self.assertNotIn("max_tokens", seen)
+        del sys.modules["openai"]
+
+    def test_old_sdk_keeps_max_tokens(self):
+        import sys, os
+        mod, seen = self._fake_openai(set())
+        sys.modules["openai"] = mod
+        os.environ["OPENAI_API_KEY"] = "sk-test"
+        from ungrounded.providers import OpenAIProvider
+        p = OpenAIProvider(model="gpt-4o", max_tokens=1024)
+        tools = [{"name": "fetch_url", "description": "d",
+                  "parameters": {"type": "object", "properties": {}}}]
+        _, status, _ = p("hello", tools)
+        self.assertEqual(status, "OK")
+        self.assertEqual(seen.get("max_tokens"), 1024)
+        del sys.modules["openai"]

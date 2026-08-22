@@ -8,6 +8,16 @@ Across 13,470 trials on six models from two vendors, correct tool usage drops fr
 
 This package measures the rate against *your* catalogue.
 
+**Replication.** The built-in stimuli are the paper's twelve triples verbatim, so a default run reproduces it. On `claude-sonnet-4-6`, 360 trials:
+
+| Correct tool invoked | This package | Paper (Study 4) |
+|---|---|---|
+| unnamed referent | 0.83% | 4.7% |
+| named, unfamiliar | 26.67% | 28.6% |
+| named, familiar | 84.17% | 82.5% |
+
+An independent reimplementation on a different SDK version, landing within a few points.
+
 ---
 
 ## Install
@@ -89,6 +99,8 @@ ungrounded template > stimuli.json
 
 A **decoy** is injected into your catalogue — a tool nothing in the stimulus set should ever call. Because nothing correct touches it, an invocation is observable misselection without needing a ground-truth trajectory for every call. That's the trick that makes under-determined prompts scoreable rather than something to filter out.
 
+**Comparing to the paper.** The paper pools three decoy variants; this package injects only the configuration-export one, which is the variant that fires hardest. So rates here run higher than the paper's pooled figures and should be compared against its configuration-export cell (39.17% for Sonnet under an unnamed referent) rather than its headline 12.64%.
+
 If your catalogue already contains a broad internal-inspection tool, use it directly instead:
 
 ```python
@@ -104,6 +116,10 @@ Tool order is shuffled every trial, so an agent that favours a position can't ma
 So: the primary test permutes the condition label *within* each prompt, confidence intervals resample whole prompts, and the summary tells you the smallest p your design can even produce. With twelve triples that's about 5 × 10⁻⁴ — anything beyond that order of magnitude isn't supported no matter how large the effect.
 
 `prompts firing` matters as much as the rate. Eleven of twelve means a prompt class. One of twelve means one odd prompt.
+
+**Expect run-to-run variance.** These models sample at temperature 1.0, and the rate moves. Four runs of the identical configuration at `--runs 10` gave 31.7%, 40.0%, 43.3% and 31.7% for the same condition — a twelve-point spread from sampling alone. Use `--runs 20` or more for anything you intend to act on, read the confidence interval rather than the point estimate, and treat a difference between two conditions as real only when the intervals separate.
+
+Correct-tool usage is far more stable than the decoy rate: across those same four runs it moved by under three points. If you want one number to track over time, use that.
 
 ## Custom providers
 
