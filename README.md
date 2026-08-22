@@ -2,6 +2,27 @@
 
 Measure how often your LLM agent reaches for the wrong tool when it can't ground an entity in a request.
 
+```bash
+pip install ungrounded
+ungrounded run --model claude-sonnet-4-6
+```
+
+```
+  MISSELECTION RATE  (decoy invoked, by grounding condition)
+  condition                  rate       95% CI (clustered)
+  --------------------------------------------------------
+  unnamed referent         43.33%      22.50% - 62.50%
+  named, unfamiliar        30.00%       8.33% - 54.17%
+  named, familiar           0.00%       0.00% -  0.00%
+
+  CORRECT TOOL USAGE  (your expected_tool invoked)
+  unnamed referent          0.83%
+  named, unfamiliar        26.67%
+  named, familiar          84.17%
+```
+
+That's a real run, sixty seconds, no configuration. Point it at your own catalogue with `--tools yours.json` when you want a number that means something about your agent.
+
 When an agent is asked about something it can't resolve — an unnamed referent like *"our CDN provider"*, or a vendor name it doesn't recognise — the tool that would serve the request becomes unusable, because a required argument can't be obtained. The agent doesn't stop. It substitutes a broader internal-inspection tool and reaches for that instead.
 
 Across 13,470 trials on six models from two vendors, correct tool usage drops from **78.1%** when the entity is groundable to **5.0%** when it isn't. The effect holds in five of six models. [Paper and data.](https://doi.org/10.5281/zenodo.21958705)
@@ -19,6 +40,16 @@ This package measures the rate against *your* catalogue.
 An independent reimplementation on a different SDK version, landing within a few points.
 
 ---
+
+## Leaderboard
+
+Correct tool invoked, by grounding condition, on the paper's twelve triples and ten-tool catalogue. Lower left and higher right is better behaviour.
+
+| Model | Unnamed referent | Named, unfamiliar | Named, familiar | Decoy rate (unnamed) |
+|---|---|---|---|---|
+| _pending_ | | | | |
+
+Regenerate with `ungrounded run --model <name> --runs 20`. Open a PR to add a model.
 
 ## Install
 
@@ -69,7 +100,8 @@ print(result.summary())
 Or from the command line:
 
 ```bash
-ungrounded run --tools tools.json --model claude-sonnet-4-6 --out trials.csv
+ungrounded run --model claude-sonnet-4-6 --out trials.csv          # example catalogue
+ungrounded run --tools mine.json --model claude-sonnet-4-6 --runs 20   # yours
 ```
 
 ## Use your own prompts
@@ -121,6 +153,18 @@ So: the primary test permutes the condition label *within* each prompt, confiden
 
 Correct-tool usage is far more stable than the decoy rate: across those same four runs it moved by under three points. If you want one number to track over time, use that.
 
+## Provider quirks
+
+Providers reject arguments in two ways: the SDK refuses a keyword outright, or the API returns a 400 saying it isn't supported for that model. Both are handled — the tool reads the remedy out of the error, applies it, and remembers it, printing one note when it does.
+
+The one that affects your numbers: some OpenAI reasoning models refuse function tools on Chat Completions unless `reasoning_effort` is set to `none`. The tool sets it when the API asks for it and says so. **That is a deliberate configuration, not the API default, so report it alongside your results** — a model measured at minimum reasoning effort is not the same model measured at its default.
+
+To pin it yourself, or to use a different value:
+
+```python
+Probe(model="gpt-...", tools=MY_TOOLS, reasoning_effort="low")
+```
+
 ## Custom providers
 
 Any callable taking `(prompt, tools)` and returning `(tool_names, status, error)`:
@@ -141,8 +185,6 @@ Use `model="mock"` to check your plumbing without spending anything.
 - **Your stimulus set is the limit.** A dozen triples caps precision; the numbers reflect the prompts you wrote.
 - **Not a security tool.** It measures a reliability failure that happens to have a security consequence. There's no adversary anywhere in this.
 
-## Citing
-
 ```bibtex
 @misc{douley2026ungrounded,
   author = {Douley, Taran},
@@ -151,5 +193,13 @@ Use `model="mock"` to check your plumbing without spending anything.
   doi    = {10.5281/zenodo.21958705}
 }
 ```
+
+## I'll run it for you
+
+If wiring this into your stack isn't worth an hour, send me your tool schema and five representative requests and I'll run it and send back the report. taran@shroudlabs.io.
+
+The open question is whether this survives contact with production tool catalogues, and I can't answer that from a synthetic ten-tool set. If you'd rather your results stayed private, say so and they will.
+
+## Citing
 
 MIT licensed. Issues and results from real catalogues are especially welcome — the open question is whether this survives contact with production tool catalogues, and I can't answer that alone.
