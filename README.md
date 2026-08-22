@@ -205,3 +205,6 @@ The open question is whether this survives contact with production tool catalogu
 ## Citing
 
 MIT licensed. Issues and results from real catalogues are especially welcome — the open question is whether this survives contact with production tool catalogues, and I can't answer that alone.
+
+Paper, per-trial data for all four studies, and the analysis that produced
+them: [ShroudLabs/ungrounded-agents](https://github.com/ShroudLabs/ungrounded-agents)
