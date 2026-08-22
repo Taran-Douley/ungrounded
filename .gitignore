@@ -6,3 +6,5 @@ build/
 .venv/
 *.csv
 !leaderboard/*.csv
+.env
+/tools.json
