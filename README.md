@@ -31,25 +31,28 @@ This package measures the rate against *your* catalogue.
 
 **Replication.** The built-in stimuli are the paper's twelve triples verbatim, so a default run reproduces it. On `claude-sonnet-4-6`, 360 trials:
 
-| Correct tool invoked | This package | Paper (Study 4) |
-|---|---|---|
-| unnamed referent | 0.83% | 4.7% |
-| named, unfamiliar | 26.67% | 28.6% |
-| named, familiar | 84.17% | 82.5% |
-
-An independent reimplementation on a different SDK version, landing within a few points.
-
----
-
 ## Leaderboard
 
-Correct tool invoked, by grounding condition, on the paper's twelve triples and ten-tool catalogue. Lower left and higher right is better behaviour.
+Correct tool invoked, by grounding condition, on the paper's twelve triples and the ten-tool example catalogue. 1,440 trials per model, 20 runs per cell. Higher on the right and lower in the decoy column is better behaviour.
 
-| Model | Unnamed referent | Named, unfamiliar | Named, familiar | Decoy rate (unnamed) |
-|---|---|---|---|---|
-| _pending_ | | | | |
+| Model | Unnamed referent | Named, unfamiliar | Named, familiar | Decoy rate (unnamed) | *p* | Prompts firing |
+|---|---|---|---|---|---|---|
+| `claude-opus-5` | 0.0% | 0.0% | 82.9% | **1.2%** | 0.22 (n.s.) | 3/12 |
+| `gpt-5.6-sol`¹ | 0.0% | 3.8% | 75.8% | 8.8% | 0.0049 | 8/12 |
+| `gpt-5.6-luna`¹ | 14.2% | 17.5% | 77.9% | 16.7% | 0.017 | 10/12 |
+| `claude-haiku-4-5` | 1.2% | 17.1% | 66.7% | 18.8% | 0.0080 | 8/12 |
+| `gpt-5.6-terra`¹ | 5.0% | 17.9% | 82.1% | 22.9% | 0.032 | 12/12 |
+| `claude-sonnet-4-6` | 0.8% | 29.6% | 84.2% | 35.8% | 0.00080 | 10/12 |
 
-Regenerate with `ungrounded run --model <name> --runs 20`. Open a PR to add a model.
+*p* is a permutation test clustered on the prompt, ungroundable versus groundable. Five of six models show the effect; `claude-opus-5` does not, and its result should be read as a null rather than as a low score.
+
+Note that the columns measure different things and a model can do well on one and badly on the other. `claude-sonnet-4-6` has the best correct-tool usage on familiar entities and the worst decoy rate on unnamed ones — it is the most decisive model in the set, in both directions.
+
+¹ These models refuse function tools on Chat Completions unless `reasoning_effort` is set to `none`, so they are measured at minimum reasoning effort while the Anthropic models run at their defaults. **Rows are not directly comparable across vendors.** Within a vendor they are.
+
+Decoy rates use the configuration-export variant only, so they run higher than the pooled figures in the paper. Reproduce any row with `ungrounded run --model <name> --runs 20`; raw per-trial data for every model is in [`leaderboard/`](leaderboard/).
+
+**This is a replication.** The paper's Study 4 reported the same six models on the same stimuli through a separate implementation. Correct-tool usage matches within a few points on every model, the ordering is preserved, and `claude-opus-5` is null in both.
 
 ## Install
 
