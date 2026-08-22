@@ -29,7 +29,6 @@ Across 13,470 trials on six models from two vendors, correct tool usage drops fr
 
 This package measures the rate against *your* catalogue.
 
-**Replication.** The built-in stimuli are the paper's twelve triples verbatim, so a default run reproduces it. On `claude-sonnet-4-6`, 360 trials:
 
 ## Leaderboard
 
