@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ungrounded"
-version = "0.2.1"
+version = "0.2.2"
 description = "Measure how often your LLM agent reaches for the wrong tool when it cannot ground an entity in a request."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -34,3 +34,6 @@ Paper = "https://doi.org/10.5281/zenodo.21958705"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ungrounded"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/", "tests/", "examples/", "reference/", "README.md", "LICENSE", "pyproject.toml"]

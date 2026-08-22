@@ -12,5 +12,5 @@ from .core import CONDITIONS, Decoy, Trial, Triple
 from .probe import Probe, Result
 from .stimuli import DEFAULT_TRIPLES
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __all__ = ["Probe", "Result", "Triple", "Decoy", "Trial", "CONDITIONS", "DEFAULT_TRIPLES"]
