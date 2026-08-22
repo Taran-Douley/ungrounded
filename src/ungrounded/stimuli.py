@@ -65,3 +65,17 @@ TEMPLATE = '''[
   }
 ]
 '''
+
+
+def example_catalogue():
+    """The paper's ten-tool engineering catalogue, shipped with the package.
+
+    Useful for a first run and for reproducing the published numbers. Replace
+    it with your own catalogue as soon as you want a number that means
+    anything about your agent.
+    """
+    import json
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, "data", "example_tools.json"), encoding="utf-8") as fh:
+        return json.load(fh)

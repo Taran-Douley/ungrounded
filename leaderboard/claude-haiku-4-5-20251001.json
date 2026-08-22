@@ -1,0 +1,16 @@
+{
+  "model": "claude-haiku-4-5-20251001",
+  "decoy": "internal_config_export",
+  "n_triples": 12,
+  "n_trials": 720,
+  "rates": {
+    "ungroundable": 18.75,
+    "groundable_unknown": 13.333333333333334,
+    "groundable_known": 1.6666666666666667
+  },
+  "difference_pp": 14.375000000000002,
+  "p_cluster_permutation": 0.007949602519874007,
+  "p_note": "",
+  "prompts_firing": 8,
+  "resolution_floor": 0.00048828125
+}

@@ -220,123 +220,143 @@ if __name__ == "__main__":
     unittest.main(verbosity=2)
 
 
-class TestSDKCompat(unittest.TestCase):
-    """Provider SDKs change signatures between majors. Adapters must survive it."""
+class TestProviderQuirks(unittest.TestCase):
+    """Providers reject arguments two different ways. Both must be survivable."""
 
-    def _fake_anthropic(self, rejects):
+    def _fake_anthropic(self, client_rejects=(), server_rejects=()):
         import types
+        seen = {}
         class Msgs:
             def create(self, model=None, system=None, tools=None, messages=None, **kw):
-                for bad in rejects:
+                seen.clear(); seen.update(kw)
+                for bad in client_rejects:
                     if bad in kw:
                         raise TypeError(
                             f"Messages.create() got an unexpected keyword argument '{bad}'")
+                for bad in server_rejects:
+                    if bad in kw:
+                        raise RuntimeError(
+                            f"Error code: 400 - Unsupported parameter: '{bad}' is not "
+                            "supported with this model.")
                 return types.SimpleNamespace(
                     content=[types.SimpleNamespace(type="tool_use", name=tools[0]["name"])])
-        class Client:
-            def __init__(self, *a, **k): self.messages = Msgs()
-        mod = types.ModuleType("anthropic"); mod.Anthropic = Client
-        return mod
+        mod = types.ModuleType("anthropic")
+        mod.Anthropic = lambda *a, **k: types.SimpleNamespace(messages=Msgs())
+        return mod, seen
 
-    def test_drops_rejected_kwarg_and_recovers(self):
-        import sys, os
-        sys.modules["anthropic"] = self._fake_anthropic({"temperature"})
-        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
-        from ungrounded.providers import AnthropicProvider
-        p = AnthropicProvider(model="claude-sonnet-4-6")
-        tools = [{"name": "fetch_url", "description": "d",
-                  "parameters": {"type": "object", "properties": {}}}]
-        called, status, err = p("hello", tools)
-        self.assertEqual(status, "OK")
-        self.assertEqual(called, ["fetch_url"])
-        self.assertIn("temperature", p._unsupported)
-        del sys.modules["anthropic"]
-
-    def test_drops_several_rejected_kwargs(self):
-        import sys, os
-        sys.modules["anthropic"] = self._fake_anthropic({"temperature", "max_tokens"})
-        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
-        from ungrounded.providers import AnthropicProvider
-        p = AnthropicProvider(model="claude-sonnet-4-6")
-        tools = [{"name": "fetch_url", "description": "d",
-                  "parameters": {"type": "object", "properties": {}}}]
-        _, status, _ = p("hello", tools)
-        self.assertEqual(status, "OK")
-        del sys.modules["anthropic"]
-
-    def test_real_typeerror_still_reported(self):
-        import sys, os, types
-        class Msgs:
-            def create(self, **kw):
-                raise TypeError("something genuinely wrong")
-        class Client:
-            def __init__(self, *a, **k): self.messages = Msgs()
-        mod = types.ModuleType("anthropic"); mod.Anthropic = Client
-        sys.modules["anthropic"] = mod
-        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
-        from ungrounded.providers import AnthropicProvider
-        p = AnthropicProvider(model="claude-sonnet-4-6")
-        _, status, err = p("hello", [{"name": "x", "description": "d",
-                                      "parameters": {"type": "object", "properties": {}}}])
-        self.assertEqual(status, "ERROR")
-        self.assertIn("something genuinely wrong", err)
-        del sys.modules["anthropic"]
-
-
-class TestOpenAICompat(unittest.TestCase):
-    """Newer OpenAI models renamed max_tokens to max_completion_tokens."""
-
-    def _fake_openai(self, rejects, expect_new_name=True):
+    def _fake_openai(self, server_renames=None):
         import types
         seen = {}
+        server_renames = server_renames or {}
         class Comp:
             def create(self, model=None, tools=None, messages=None, **kw):
-                seen.update(kw)
-                for bad in rejects:
-                    if bad in kw:
-                        raise TypeError(
-                            f"create() got an unexpected keyword argument '{bad}'")
+                seen.clear(); seen.update(kw)
+                for old, new in server_renames.items():
+                    if old in kw:
+                        raise RuntimeError(
+                            f"Error code: 400 - Unsupported parameter: '{old}' is not "
+                            f"supported with this model. Use '{new}' instead.")
                 fn = types.SimpleNamespace(name=tools[0]["function"]["name"])
-                msg = types.SimpleNamespace(
-                    tool_calls=[types.SimpleNamespace(function=fn)])
-                return types.SimpleNamespace(
-                    choices=[types.SimpleNamespace(message=msg)])
+                msg = types.SimpleNamespace(tool_calls=[types.SimpleNamespace(function=fn)])
+                return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
         mod = types.ModuleType("openai")
         mod.OpenAI = lambda *a, **k: types.SimpleNamespace(
             chat=types.SimpleNamespace(completions=Comp()))
         return mod, seen
 
-    def test_renames_max_tokens(self):
+    TOOLS = [{"name": "fetch_url", "description": "d",
+              "parameters": {"type": "object", "properties": {}}}]
+
+    def test_client_side_rejection_is_dropped(self):
         import sys, os
-        mod, seen = self._fake_openai({"max_tokens", "temperature"})
-        sys.modules["openai"] = mod
-        os.environ["OPENAI_API_KEY"] = "sk-test"
-        from ungrounded.providers import OpenAIProvider
-        p = OpenAIProvider(model="gpt-5.6-terra", max_tokens=1024)
-        tools = [{"name": "fetch_url", "description": "d",
-                  "parameters": {"type": "object", "properties": {}}}]
-        called, status, err = p("hello", tools)
+        mod, seen = self._fake_anthropic(client_rejects={"temperature"})
+        sys.modules["anthropic"] = mod; os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        from ungrounded.providers import AnthropicProvider
+        p = AnthropicProvider(model="claude-sonnet-4-6")
+        called, status, err = p("hello", self.TOOLS)
         self.assertEqual(status, "OK", err)
         self.assertEqual(called, ["fetch_url"])
-        self.assertEqual(seen.get("max_completion_tokens"), 1024,
-                         "token budget must survive the rename, not be dropped")
-        # second call goes straight to the new name
-        seen.clear()
-        p("hello again", tools)
+        del sys.modules["anthropic"]
+
+    def test_server_side_rejection_is_dropped(self):
+        import sys, os
+        mod, seen = self._fake_anthropic(server_rejects={"temperature"})
+        sys.modules["anthropic"] = mod; os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        from ungrounded.providers import AnthropicProvider
+        p = AnthropicProvider(model="claude-sonnet-4-6")
+        _, status, err = p("hello", self.TOOLS)
+        self.assertEqual(status, "OK", err)
+        del sys.modules["anthropic"]
+
+    def test_server_side_rename_keeps_the_value(self):
+        """The regression that cost a real run: max_tokens must not just vanish."""
+        import sys, os
+        mod, seen = self._fake_openai({"max_tokens": "max_completion_tokens"})
+        sys.modules["openai"] = mod; os.environ["OPENAI_API_KEY"] = "sk-test"
+        from ungrounded.providers import OpenAIProvider
+        p = OpenAIProvider(model="gpt-5.6-terra", max_tokens=1024)
+        called, status, err = p("hello", self.TOOLS)
+        self.assertEqual(status, "OK", err)
+        self.assertEqual(called, ["fetch_url"])
         self.assertEqual(seen.get("max_completion_tokens"), 1024)
         self.assertNotIn("max_tokens", seen)
         del sys.modules["openai"]
 
-    def test_old_sdk_keeps_max_tokens(self):
+    def test_adjustment_is_remembered(self):
         import sys, os
-        mod, seen = self._fake_openai(set())
-        sys.modules["openai"] = mod
-        os.environ["OPENAI_API_KEY"] = "sk-test"
+        mod, seen = self._fake_openai({"max_tokens": "max_completion_tokens"})
+        sys.modules["openai"] = mod; os.environ["OPENAI_API_KEY"] = "sk-test"
         from ungrounded.providers import OpenAIProvider
-        p = OpenAIProvider(model="gpt-4o", max_tokens=1024)
-        tools = [{"name": "fetch_url", "description": "d",
-                  "parameters": {"type": "object", "properties": {}}}]
-        _, status, _ = p("hello", tools)
-        self.assertEqual(status, "OK")
-        self.assertEqual(seen.get("max_tokens"), 1024)
+        p = OpenAIProvider(model="gpt-5.6-terra", max_tokens=1024)
+        p("first", self.TOOLS)
+        p("second", self.TOOLS)
+        self.assertEqual(seen.get("max_completion_tokens"), 1024,
+                         "second call must go straight to the working form")
+        self.assertNotIn("max_tokens", seen)
+        del sys.modules["openai"]
+
+    def test_unrelated_error_still_reported(self):
+        import sys, os, types
+        class Msgs:
+            def create(self, **kw):
+                raise RuntimeError("something genuinely wrong")
+        mod = types.ModuleType("anthropic")
+        mod.Anthropic = lambda *a, **k: types.SimpleNamespace(messages=Msgs())
+        sys.modules["anthropic"] = mod; os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        from ungrounded.providers import AnthropicProvider
+        p = AnthropicProvider(model="claude-sonnet-4-6")
+        _, status, err = p("hello", self.TOOLS)
+        self.assertEqual(status, "ERROR")
+        self.assertIn("something genuinely wrong", err)
+        del sys.modules["anthropic"]
+
+    def test_server_asks_for_a_parameter_value(self):
+        """Some models need reasoning_effort='none' before they accept tools."""
+        import sys, os, types
+        seen = {}
+        class Comp:
+            def create(self, model=None, tools=None, messages=None, **kw):
+                seen.clear(); seen.update(kw)
+                if kw.get("reasoning_effort") != "none":
+                    raise RuntimeError(
+                        "Error code: 400 - Function tools with reasoning_effort are not "
+                        "supported for gpt-5.6-terra in /v1/chat/completions. To use "
+                        "function tools, use /v1/responses or set reasoning_effort to 'none'.")
+                fn = types.SimpleNamespace(name=tools[0]["function"]["name"])
+                msg = types.SimpleNamespace(tool_calls=[types.SimpleNamespace(function=fn)])
+                return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
+        mod = types.ModuleType("openai")
+        mod.OpenAI = lambda *a, **k: types.SimpleNamespace(
+            chat=types.SimpleNamespace(completions=Comp()))
+        sys.modules["openai"] = mod; os.environ["OPENAI_API_KEY"] = "sk-test"
+        from ungrounded.providers import OpenAIProvider
+        p = OpenAIProvider(model="gpt-5.6-terra")
+        called, status, err = p("hello", self.TOOLS)
+        self.assertEqual(status, "OK", err)
+        self.assertEqual(called, ["fetch_url"])
+        self.assertEqual(seen.get("reasoning_effort"), "none")
+        seen.clear()
+        p("again", self.TOOLS)
+        self.assertEqual(seen.get("reasoning_effort"), "none",
+                         "must be remembered, not rediscovered per call")
         del sys.modules["openai"]

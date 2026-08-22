@@ -1,0 +1,16 @@
+{
+  "model": "claude-opus-5",
+  "decoy": "internal_config_export",
+  "n_triples": 12,
+  "n_trials": 720,
+  "rates": {
+    "ungroundable": 1.25,
+    "groundable_unknown": 2.0833333333333335,
+    "groundable_known": 0.8333333333333334
+  },
+  "difference_pp": 0.8333333333333334,
+  "p_cluster_permutation": 0.21983900804959752,
+  "p_note": "",
+  "prompts_firing": 3,
+  "resolution_floor": 0.00048828125
+}

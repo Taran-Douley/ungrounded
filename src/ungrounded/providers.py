@@ -23,53 +23,104 @@ SYSTEM_PROMPT = (
 TRANSIENT = ("RateLimit", "Overloaded", "APIConnection", "InternalServer", "APITimeout", "Timeout")
 
 
-_UNSUPPORTED = re.compile(r"unexpected keyword argument '([^']+)'")
+_CLIENT_REJECT = re.compile(r"unexpected keyword argument '([^']+)'")
+# Server-side: "Unsupported parameter: 'max_tokens' is not supported with this
+# model. Use 'max_completion_tokens' instead."
+_SERVER_RENAME = re.compile(
+    r"[Uu]nsupported parameter: '([^']+)'.*?[Uu]se '([^']+)' instead", re.S)
+_SERVER_DROP = re.compile(r"[Uu]nsupported parameter: '([^']+)'")
+# "...To use function tools, use /v1/responses or set reasoning_effort to 'none'."
+_SERVER_SET = re.compile(r"set (\w+) to '([^']+)'")
 
 
-def _retry(fn: Callable[..., Tuple[List[str], str, str]], attempts: int = 4, **kwargs):
-    """Call fn(**kwargs), retrying transient errors.
+def _retry(fn: Callable[..., Tuple[List[str], str, str]], adjust: dict,
+           attempts: int = 4, **kwargs):
+    """Call fn(**kwargs), adapting to provider quirks and retrying transient errors.
 
-    Provider SDKs change their signatures between major versions -- anthropic
-    1.0 dropped ``temperature`` from messages.create, for instance. Rather
-    than pinning a version, drop any keyword the SDK rejects and try again,
-    so the same code works across releases.
+    Providers reject arguments in two different ways and both have to be
+    handled. The SDK may refuse a keyword outright (a TypeError, raised
+    before any request goes out), or the API may accept it and return a 400
+    saying the parameter is unsupported for that model -- sometimes naming
+    its replacement, as OpenAI does for max_tokens.
+
+    Adjustments are recorded in ``adjust`` so later calls skip straight to
+    the working form instead of paying for a failed request every time.
     """
     delay = 1.0
-    dropped = []
+    notes = []
     i = 0
     while i < attempts:
         try:
-            return fn(**kwargs), dropped
-        except TypeError as e:
-            m = _UNSUPPORTED.search(str(e))
-            if m and m.group(1) in kwargs:
-                dropped.append(kwargs.pop(m.group(1)) is not None and m.group(1))
-                continue  # not an attempt: retry immediately without it
-            return ([], "ERROR", f"TypeError: {e}"), dropped
+            return fn(**kwargs), notes
         except Exception as e:  # noqa: BLE001 - provider SDKs raise many types
-            name = type(e).__name__
-            if i == attempts - 1 or not any(s in name for s in TRANSIENT):
-                return ([], "ERROR", f"{name}: {e}"), dropped
+            name, msg = type(e).__name__, str(e)
+
+            m = _CLIENT_REJECT.search(msg)
+            if isinstance(e, TypeError) and m and m.group(1) in kwargs:
+                bad = m.group(1)
+                kwargs.pop(bad)
+                adjust.setdefault("drop", set()).add(bad)
+                notes.append(f"{bad!r} is not accepted by this SDK; continuing without it")
+                continue
+
+            m = _SERVER_RENAME.search(msg)
+            if m and m.group(1) in kwargs:
+                old, new = m.group(1), m.group(2)
+                kwargs[new] = kwargs.pop(old)
+                adjust.setdefault("rename", {})[old] = new
+                notes.append(f"this model wants {new!r} rather than {old!r}; switched")
+                continue
+
+            m = _SERVER_SET.search(msg)
+            if m:
+                param, value = m.group(1), m.group(2)
+                if kwargs.get(param) != value:
+                    kwargs[param] = value
+                    adjust.setdefault("set", {})[param] = value
+                    notes.append(
+                        f"this model requires {param}={value!r} to use function tools; "
+                        "set it (this is a deliberate configuration choice, not the "
+                        "API default -- report it alongside your results)")
+                    continue
+
+            m = _SERVER_DROP.search(msg)
+            if m and m.group(1) in kwargs:
+                bad = m.group(1)
+                kwargs.pop(bad)
+                adjust.setdefault("drop", set()).add(bad)
+                notes.append(f"{bad!r} is not supported by this model; continuing without it")
+                continue
+
+            if i == attempts - 1 or not any(t in name for t in TRANSIENT):
+                return ([], "ERROR", f"{name}: {e}"), notes
             time.sleep(delay + random.random())
             delay = min(delay * 2, 30)
             i += 1
-    return ([], "ERROR", "retries exhausted"), dropped
+    return ([], "ERROR", "retries exhausted"), notes
+
+
+def _apply(kw: dict, adjust: dict) -> dict:
+    """Apply everything learned so far, so repeat calls cost nothing extra."""
+    kw.update(adjust.get("set", {}))
+    for old, new in adjust.get("rename", {}).items():
+        if old in kw:
+            kw[new] = kw.pop(old)
+    for bad in adjust.get("drop", set()):
+        kw.pop(bad, None)
+    return kw
 
 
 class _DropsUnsupported:
-    """Remembers keyword arguments the installed SDK rejects, and says so once."""
+    """Remembers how this provider wants to be called, and says so once."""
 
-    _unsupported: set
+    _adjust: dict
+    _said: set
 
-    def _note_dropped(self, dropped):
-        for name in dropped:
-            if name and name not in self._unsupported:
-                self._unsupported.add(name)
-                print(
-                    f"  note: this SDK version does not accept {name!r}; "
-                    "continuing without it (the provider default applies)",
-                    file=sys.stderr,
-                )
+    def _note(self, notes):
+        for n in notes:
+            if n not in self._said:
+                self._said.add(n)
+                print(f"  note: {n}", file=sys.stderr)
 
 
 class AnthropicProvider(_DropsUnsupported):
@@ -83,7 +134,8 @@ class AnthropicProvider(_DropsUnsupported):
         self._client = anthropic.Anthropic()
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
         self._extra = kw
-        self._unsupported = set()
+        self._adjust = {}
+        self._said = set()
 
     def __call__(self, prompt: str, tools: Sequence[Dict[str, Any]]):
         payload = [
@@ -102,10 +154,10 @@ class AnthropicProvider(_DropsUnsupported):
             called = [b.name for b in r.content if getattr(b, "type", None) == "tool_use"]
             return called, "OK", ""
 
-        kw = dict(max_tokens=self.max_tokens, temperature=self.temperature, **self._extra)
-        kw = {k: v for k, v in kw.items() if k not in self._unsupported}
-        out, dropped = _retry(go, **kw)
-        self._note_dropped(dropped)
+        kw = _apply(dict(max_tokens=self.max_tokens,
+                         temperature=self.temperature, **self._extra), self._adjust)
+        out, notes = _retry(go, self._adjust, **kw)
+        self._note(notes)
         return out
 
 
@@ -128,8 +180,8 @@ class OpenAIProvider(_DropsUnsupported):
         self._client = openai.OpenAI()
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
         self._extra = kw
-        self._unsupported = set()
-        self._renamed = set()
+        self._adjust = {}
+        self._said = set()
 
     def __call__(self, prompt: str, tools: Sequence[Dict[str, Any]]):
         payload = [
@@ -157,22 +209,10 @@ class OpenAIProvider(_DropsUnsupported):
             calls = r.choices[0].message.tool_calls or []
             return [c.function.name for c in calls], "OK", ""
 
-        kw = dict(max_tokens=self.max_tokens, temperature=self.temperature, **self._extra)
-        if "max_tokens" in self._renamed:
-            kw["max_completion_tokens"] = kw.pop("max_tokens")
-        kw = {k: v for k, v in kw.items() if k not in self._unsupported}
-        out, dropped = _retry(go, **kw)
-        # Newer OpenAI models reject max_tokens in favour of
-        # max_completion_tokens. Retry under the new name rather than
-        # silently falling back to the model default.
-        if "max_tokens" in dropped and "max_completion_tokens" not in kw:
-            self._renamed.add("max_tokens")
-            self._unsupported.discard("max_tokens")
-            kw.pop("max_tokens", None)
-            kw["max_completion_tokens"] = self.max_tokens
-            out, dropped2 = _retry(go, **kw)
-            dropped = [d for d in dropped if d != "max_tokens"] + list(dropped2)
-        self._note_dropped(dropped)
+        kw = _apply(dict(max_tokens=self.max_tokens,
+                         temperature=self.temperature, **self._extra), self._adjust)
+        out, notes = _retry(go, self._adjust, **kw)
+        self._note(notes)
         return out
 
 

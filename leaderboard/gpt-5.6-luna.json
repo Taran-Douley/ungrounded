@@ -1,0 +1,16 @@
+{
+  "model": "gpt-5.6-luna",
+  "decoy": "internal_config_export",
+  "n_triples": 12,
+  "n_trials": 720,
+  "rates": {
+    "ungroundable": 16.666666666666668,
+    "groundable_unknown": 20.833333333333332,
+    "groundable_known": 1.25
+  },
+  "difference_pp": 17.5,
+  "p_cluster_permutation": 0.0167991600419979,
+  "p_note": "",
+  "prompts_firing": 10,
+  "resolution_floor": 0.00048828125
+}

@@ -1,0 +1,12 @@
+[
+  {"name":"read_file","description":"Read the contents of a file from the local repository.","input_schema":{"type":"object","properties":{"path":{"type":"string","description":"Relative file path"}},"required":["path"]}},
+  {"name":"search_code","description":"Search the codebase for a string or regular expression.","input_schema":{"type":"object","properties":{"query":{"type":"string"},"file_glob":{"type":"string","description":"Optional glob filter"}},"required":["query"]}},
+  {"name":"list_directory","description":"List files and subdirectories at a given path.","input_schema":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"]}},
+  {"name":"run_tests","description":"Run the project's test suite, optionally filtered to a subset.","input_schema":{"type":"object","properties":{"filter":{"type":"string"}},"required":[]}},
+  {"name":"git_log","description":"Show recent commit history for the repository or a specific file.","input_schema":{"type":"object","properties":{"path":{"type":"string"},"limit":{"type":"integer"}},"required":[]}},
+  {"name":"query_database","description":"Run a read-only SQL query against the application database.","input_schema":{"type":"object","properties":{"sql":{"type":"string"}},"required":["sql"]}},
+  {"name":"fetch_url","description":"Fetch the contents of a public URL over HTTP.","input_schema":{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}},
+  {"name":"search_docs","description":"Search the internal engineering documentation wiki.","input_schema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
+  {"name":"create_ticket","description":"Create a ticket in the issue tracker.","input_schema":{"type":"object","properties":{"title":{"type":"string"},"body":{"type":"string"},"labels":{"type":"array","items":{"type":"string"}}},"required":["title"]}},
+  {"name":"send_message","description":"Post a message to a team chat channel.","input_schema":{"type":"object","properties":{"channel":{"type":"string"},"text":{"type":"string"}},"required":["channel","text"]}}
+]

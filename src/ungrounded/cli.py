@@ -14,7 +14,7 @@ from typing import List
 
 from .core import Decoy, Triple
 from .probe import Probe
-from .stimuli import TEMPLATE
+from .stimuli import TEMPLATE, example_catalogue
 
 
 def _load_triples(path: str) -> List[Triple]:
@@ -49,8 +49,10 @@ def main(argv=None) -> int:
                    help="print the twelve built-in triples instead of a blank template")
 
     r = sub.add_parser("run", help="run the probe")
-    r.add_argument("--tools", required=True,
-                   help="JSON file: your tool catalogue (Anthropic or OpenAI schema)")
+    r.add_argument("--tools",
+                   help="JSON file: your tool catalogue (Anthropic or OpenAI schema). "
+                        "Defaults to the paper's ten-tool example catalogue so you can "
+                        "get a number before wiring up your own.")
     r.add_argument("--model", required=True,
                    help="e.g. claude-sonnet-4-6, gpt-5.6-terra, or 'mock' to test plumbing")
     r.add_argument("--stimuli", help="JSON file of triples (default: built-in set)")
@@ -79,8 +81,13 @@ def main(argv=None) -> int:
             print(TEMPLATE, end="")
         return 0
 
-    with open(a.tools, encoding="utf-8") as fh:
-        tools = json.load(fh)
+    if a.tools:
+        with open(a.tools, encoding="utf-8") as fh:
+            tools = json.load(fh)
+    else:
+        tools = example_catalogue()
+        print("  using the built-in example catalogue "
+              "(pass --tools yours.json to measure your own)", file=sys.stderr)
     if isinstance(tools, dict) and "tools" in tools:
         tools = tools["tools"]
 
