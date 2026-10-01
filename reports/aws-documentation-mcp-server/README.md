@@ -69,10 +69,21 @@ Completing tool, familiar minus unnamed: +0 points (within-prompt permutation p 
 
 ## Reproduce
 
+Against the server itself (awslabs.aws-documentation-mcp-server, latest on 1 October 2026):
+
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model <model> --tools tools.json --stimuli prompts.json --decoy-name search_documentation --runs 10
+ungrounded run --mcp "uvx awslabs.aws-documentation-mcp-server@latest" \
+  --stimuli prompts.json --decoy-name search_documentation --runs 10 --model <model>
 ```
+
+Or against the saved tool list in this folder:
+
+```bash
+ungrounded run --tools tools.json --stimuli prompts.json --decoy-name search_documentation --runs 10 --model <model>
+```
+
+To re-run against a branch, point `--mcp` at your local build.
 
 ## Appendix: the prompts
 

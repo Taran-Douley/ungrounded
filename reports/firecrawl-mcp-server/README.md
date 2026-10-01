@@ -57,12 +57,24 @@ Completing tool, familiar minus unnamed: +47 points (within-prompt permutation p
 
 ## Reproduce
 
+Against the server itself (firecrawl-mcp 3.27.2):
+
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model gpt-5.6-terra --tools tools.json \
-  --stimuli prompts.json --decoy-name firecrawl_search --runs 10
+ungrounded run --mcp "npx -y firecrawl-mcp" \
+  --mcp-env FIRECRAWL_API_KEY=placeholder \
+  --stimuli prompts.json --decoy-name firecrawl_search --runs 10 --model <model>
 ```
-The tool list, prompts and per-trial results are in this folder.
+
+Without a `FIRECRAWL_API_KEY` the server lists 25 tools instead of 27 (the two feedback tools are left out); the placeholder reproduces the list measured here.
+
+Or against the saved tool list in this folder:
+
+```bash
+ungrounded run --tools tools.json --stimuli prompts.json --decoy-name firecrawl_search --runs 10 --model <model>
+```
+
+To re-run against a branch, point `--mcp` at your local build.
 
 ## Appendix: the prompts
 

@@ -67,10 +67,21 @@ Completing tool, familiar minus unnamed: +49 points (within-prompt permutation p
 
 ## Reproduce
 
+Against the server itself (exa-mcp-server 3.4.1):
+
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model <model> --tools tools.json --stimuli prompts.json --decoy-name web_search_exa --runs 10
+ungrounded run --mcp "npx -y exa-mcp-server@3.4.1" \
+  --stimuli prompts.json --decoy-name web_search_exa --runs 10 --model <model>
 ```
+
+Or against the saved tool list in this folder:
+
+```bash
+ungrounded run --tools tools.json --stimuli prompts.json --decoy-name web_search_exa --runs 10 --model <model>
+```
+
+To re-run against a branch, point `--mcp` at your local build.
 
 ## Appendix: the prompts
 

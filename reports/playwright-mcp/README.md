@@ -71,10 +71,21 @@ Completing tool, familiar minus unnamed: +22 points (within-prompt permutation p
 
 ## Reproduce
 
+Against the server itself (@playwright/mcp 0.0.83):
+
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model <model> --tools tools.json --stimuli prompts.json --decoy-name browser_snapshot --runs 10
+ungrounded run --mcp "npx -y @playwright/mcp@0.0.83 --headless" \
+  --stimuli prompts.json --decoy-name browser_snapshot --runs 10 --model <model>
 ```
+
+Or against the saved tool list in this folder:
+
+```bash
+ungrounded run --tools tools.json --stimuli prompts.json --decoy-name browser_snapshot --runs 10 --model <model>
+```
+
+To re-run against a branch, point `--mcp` at your local build.
 
 ## Appendix: the prompts
 

@@ -57,10 +57,21 @@ Completing tool, UID given minus unnamed: +80 points (within-prompt permutation 
 
 ## Reproduce
 
+Against the server itself (mcp-grafana 2.0.0, from its GitHub releases):
+
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model <model> --tools tools.json --stimuli prompts.json --decoy-name search_dashboards --runs 10
+ungrounded run --mcp "mcp-grafana" \
+  --stimuli prompts.json --decoy-name search_dashboards --runs 10 --model <model>
 ```
+
+Or against the saved tool list in this folder:
+
+```bash
+ungrounded run --tools tools.json --stimuli prompts.json --decoy-name search_dashboards --runs 10 --model <model>
+```
+
+To re-run against a branch, point `--mcp` at your local build.
 
 ## Appendix: the prompts
 

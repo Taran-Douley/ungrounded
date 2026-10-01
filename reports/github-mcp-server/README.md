@@ -57,12 +57,21 @@ Completing tool, familiar minus unnamed: +88 points (within-prompt permutation p
 
 ## Reproduce
 
+Against the server itself (github-mcp-server 1.12.2, from its GitHub releases):
+
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model gpt-5.6-terra --tools tools.json \
-  --stimuli prompts.json --decoy-name search_repositories --runs 10
+ungrounded run --mcp "github-mcp-server stdio" \
+  --stimuli prompts.json --decoy-name search_repositories --runs 10 --model <model>
 ```
-The tool list, prompts and per-trial results are in this folder.
+
+Or against the saved tool list in this folder:
+
+```bash
+ungrounded run --tools tools.json --stimuli prompts.json --decoy-name search_repositories --runs 10 --model <model>
+```
+
+To re-run against a branch, point `--mcp` at your local build.
 
 ## Appendix: the prompts
 

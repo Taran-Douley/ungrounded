@@ -33,12 +33,16 @@ and guess an identifier when it doesn't.
 Each prompt version ran 10 times per model at temperature 1.0, first assistant turn only, with no
 tools executed. `gpt-5.6-terra` ran on the OpenAI API at reasoning effort `none`;
 `claude-sonnet-4-6` was served through OpenRouter. Measured on 1 October 2026 with `ungrounded`
-0.3.0. Reproduce any report with:
+0.3.0; `--mcp` needs 0.4.0 or later. Reproduce any report with:
 
 ```bash
 pip install 'ungrounded[all]'
-ungrounded run --model <model> --tools tools.json --stimuli prompts.json --runs 10
+ungrounded run --mcp "<command that starts the server>" --stimuli prompts.json --runs 10 --model <model>
+# or, with the saved tool list:
+ungrounded run --tools tools.json --stimuli prompts.json --runs 10 --model <model>
 ```
+
+Each report gives the exact start command and server version that was measured.
 
 A lower completing-tool rate is not, on its own, a bug: when an entity can't be resolved, looking
 it up or asking the user is often the right first step. The reports flag guessing, not caution.
