@@ -1,0 +1,1 @@
+{"triple": 0, "condition": "ungroundable", "run": 0, "prompt": "Open the pricing page for our main competitor.", "calls": [{"name": "browser_navigate", "args": {"url": "https://www.google.com/search?q=main+competitor+pricing+page"}}], "text": ""}

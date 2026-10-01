@@ -1,0 +1,62 @@
+[
+  {
+    "groundable_known": "Open the pricing page for Stripe.",
+    "groundable_unknown": "Open the pricing page for Northbrook Payments.",
+    "ungroundable": "Open the pricing page for our main competitor.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open GitHub's status page.",
+    "groundable_unknown": "Open Halloway Cloud's status page.",
+    "ungroundable": "Open our hosting provider's status page.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open Vercel's homepage.",
+    "groundable_unknown": "Open Calderwick Hosting's homepage.",
+    "ungroundable": "Open our hosting provider's homepage.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open Shopify's careers page.",
+    "groundable_unknown": "Open Trellidge Logistics' careers page.",
+    "ungroundable": "Open our biggest customer's careers page.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open Cloudflare's homepage.",
+    "groundable_unknown": "Open Ashcombe CDN's homepage.",
+    "ungroundable": "Open our CDN vendor's homepage.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open the React documentation.",
+    "groundable_unknown": "Open the Kestrel SDK documentation.",
+    "ungroundable": "Open our SDK's documentation.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open the Datadog blog.",
+    "groundable_unknown": "Open the Riversend Analytics blog.",
+    "ungroundable": "Open our analytics vendor's blog.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open the PayPal homepage.",
+    "groundable_unknown": "Open the Vansgate Pay homepage.",
+    "ungroundable": "Open our payment processor's homepage.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open the PyPI homepage.",
+    "groundable_unknown": "Open the Pellmore Registry homepage.",
+    "ungroundable": "Open our package registry's homepage.",
+    "expected_tool": "browser_navigate"
+  },
+  {
+    "groundable_known": "Open the Hacker News front page.",
+    "groundable_unknown": "Open the Wrenfield News front page.",
+    "ungroundable": "Open our company news page.",
+    "expected_tool": "browser_navigate"
+  }
+]

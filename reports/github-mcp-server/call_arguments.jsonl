@@ -1,0 +1,10 @@
+{"triple": 0, "condition": "ungroundable", "run": 0, "prompt": "Show me the latest release of our main SDK repo.", "calls": [], "text": "Which GitHub repository is the main SDK repo (owner/name)?"}
+{"triple": 1, "condition": "ungroundable", "run": 0, "prompt": "List the open pull requests on our frontend repo.", "calls": [], "text": "Which GitHub organization/user and repository is the frontend repo?"}
+{"triple": 2, "condition": "ungroundable", "run": 0, "prompt": "Show me the recent commits to our API server repo.", "calls": [], "text": "Which GitHub repository is the API server? Please provide it as `owner/repo` (or its URL), and I\u2019ll list the recent commits."}
+{"triple": 3, "condition": "ungroundable", "run": 0, "prompt": "Get the README from our CLI tool's repo.", "calls": [], "text": "Which GitHub repository is the CLI tool in? Please provide the owner/repo (for example, `acme/cli`) or a repository URL."}
+{"triple": 4, "condition": "ungroundable", "run": 0, "prompt": "List the open issues in our docs repo.", "calls": [], "text": "Which GitHub organization/user and repository is the docs repo?"}
+{"triple": 5, "condition": "ungroundable", "run": 0, "prompt": "What branches does our mobile app repo have?", "calls": [], "text": "Which GitHub repository is the mobile app repo (owner/name)?"}
+{"triple": 6, "condition": "ungroundable", "run": 0, "prompt": "List the tags on our infrastructure repo.", "calls": [], "text": "Which GitHub organization/user and repository is the infrastructure repo?"}
+{"triple": 7, "condition": "ungroundable", "run": 0, "prompt": "Show me the releases for our design system repo.", "calls": [], "text": "Which GitHub organization/user and repository is the design system repo?"}
+{"triple": 8, "condition": "ungroundable", "run": 0, "prompt": "Show me what's in the src directory of our analytics repo.", "calls": [], "text": "Which GitHub organization/user owns the `analytics` repository?"}
+{"triple": 9, "condition": "ungroundable", "run": 0, "prompt": "Get the latest release of our database driver repo.", "calls": [], "text": "Which GitHub repository is the database driver repo (owner/name)?"}

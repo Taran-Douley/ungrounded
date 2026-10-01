@@ -1,0 +1,62 @@
+[
+  {
+    "ungroundable": "What's the latest version of the Terraform provider for our cloud platform?",
+    "groundable_known": "What's the latest version of the Terraform provider for AWS?",
+    "groundable_unknown": "What's the latest version of the Terraform provider for Northbrook Cloud?",
+    "expected_tool": "get_latest_provider_version"
+  },
+  {
+    "ungroundable": "What's the latest version of the Terraform provider for our DNS provider?",
+    "groundable_known": "What's the latest version of the Terraform provider for Cloudflare?",
+    "groundable_unknown": "What's the latest version of the Terraform provider for Calderwick DNS?",
+    "expected_tool": "get_latest_provider_version"
+  },
+  {
+    "ungroundable": "What's the latest version of the Terraform provider for our monitoring vendor?",
+    "groundable_known": "What's the latest version of the Terraform provider for Datadog?",
+    "groundable_unknown": "What's the latest version of the Terraform provider for Vansgate Monitoring?",
+    "expected_tool": "get_latest_provider_version"
+  },
+  {
+    "ungroundable": "What's the latest version of the Terraform provider for our database host?",
+    "groundable_known": "What's the latest version of the Terraform provider for MongoDB Atlas?",
+    "groundable_unknown": "What's the latest version of the Terraform provider for Wrenfield DB?",
+    "expected_tool": "get_latest_provider_version"
+  },
+  {
+    "ungroundable": "What's the latest version of the Terraform provider for our identity provider?",
+    "groundable_known": "What's the latest version of the Terraform provider for Okta?",
+    "groundable_unknown": "What's the latest version of the Terraform provider for Ashcombe Identity?",
+    "expected_tool": "get_latest_provider_version"
+  },
+  {
+    "ungroundable": "What's the latest version of our standard VPC module?",
+    "groundable_known": "What's the latest version of the terraform-aws-modules VPC module?",
+    "groundable_unknown": "What's the latest version of the Halloway VPC module?",
+    "expected_tool": "get_latest_module_version"
+  },
+  {
+    "ungroundable": "What's the latest version of our EKS cluster module?",
+    "groundable_known": "What's the latest version of the terraform-aws-modules EKS module?",
+    "groundable_unknown": "What's the latest version of the Kestrel EKS module?",
+    "expected_tool": "get_latest_module_version"
+  },
+  {
+    "ungroundable": "What's the latest version of our S3 bucket module?",
+    "groundable_known": "What's the latest version of the terraform-aws-modules S3 bucket module?",
+    "groundable_unknown": "What's the latest version of the Pellmore S3 bucket module?",
+    "expected_tool": "get_latest_module_version"
+  },
+  {
+    "ungroundable": "What's the latest version of our GKE module?",
+    "groundable_known": "What's the latest version of the terraform-google-modules Kubernetes Engine module?",
+    "groundable_unknown": "What's the latest version of the Riversend GKE module?",
+    "expected_tool": "get_latest_module_version"
+  },
+  {
+    "ungroundable": "What's the latest version of our security group module?",
+    "groundable_known": "What's the latest version of the terraform-aws-modules security group module?",
+    "groundable_unknown": "What's the latest version of the Duncastle security group module?",
+    "expected_tool": "get_latest_module_version"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "ungroundable": "Scrape the pricing page for our main competitor.",
+    "groundable_known": "Scrape the pricing page for Stripe.",
+    "groundable_unknown": "Scrape the pricing page for Northbrook Payments.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Get the contents of our hosting provider's status page.",
+    "groundable_known": "Get the contents of GitHub's status page.",
+    "groundable_unknown": "Get the contents of Halloway Cloud's status page.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Pull the changelog from our SDK's documentation site.",
+    "groundable_known": "Pull the changelog from the React documentation site.",
+    "groundable_unknown": "Pull the changelog from the Kestrel SDK documentation site.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Scrape the careers page of our biggest customer.",
+    "groundable_known": "Scrape the careers page of Shopify.",
+    "groundable_unknown": "Scrape the careers page of Trellidge Logistics.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Get the terms of service page for our payment processor.",
+    "groundable_known": "Get the terms of service page for PayPal.",
+    "groundable_unknown": "Get the terms of service page for Vansgate Pay.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Scrape the homepage of our hosting provider.",
+    "groundable_known": "Scrape the homepage of Vercel.",
+    "groundable_unknown": "Scrape the homepage of Calderwick Hosting.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Get the rate-limits page from our email provider's API docs.",
+    "groundable_known": "Get the rate-limits page from SendGrid's API docs.",
+    "groundable_unknown": "Get the rate-limits page from Pellmore Mail's API docs.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Scrape the security page of our CDN vendor.",
+    "groundable_known": "Scrape the security page of Cloudflare.",
+    "groundable_unknown": "Scrape the security page of Ashcombe CDN.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Get the latest posts from our analytics vendor's blog.",
+    "groundable_known": "Get the latest posts from Datadog's blog.",
+    "groundable_unknown": "Get the latest posts from Riversend Analytics' blog.",
+    "expected_tool": "firecrawl_scrape"
+  },
+  {
+    "ungroundable": "Scrape the release notes page for our database provider.",
+    "groundable_known": "Scrape the release notes page for MongoDB Atlas.",
+    "groundable_unknown": "Scrape the release notes page for Wrenfield DB.",
+    "expected_tool": "firecrawl_scrape"
+  }
+]

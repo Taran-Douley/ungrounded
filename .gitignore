@@ -8,3 +8,4 @@ build/
 !leaderboard/*.csv
 .env
 /tools.json
+!reports/**/*.csv

@@ -1,0 +1,62 @@
+[
+  {
+    "groundable_known": "Read the content of the pricing page for Stripe.",
+    "groundable_unknown": "Read the content of the pricing page for Northbrook Payments.",
+    "ungroundable": "Read the content of the pricing page for our main competitor.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of GitHub's status page.",
+    "groundable_unknown": "Read the content of Halloway Cloud's status page.",
+    "ungroundable": "Read the content of our hosting provider's status page.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of Vercel's homepage.",
+    "groundable_unknown": "Read the content of Calderwick Hosting's homepage.",
+    "ungroundable": "Read the content of our hosting provider's homepage.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of Shopify's careers page.",
+    "groundable_unknown": "Read the content of Trellidge Logistics' careers page.",
+    "ungroundable": "Read the content of our biggest customer's careers page.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of Cloudflare's homepage.",
+    "groundable_unknown": "Read the content of Ashcombe CDN's homepage.",
+    "ungroundable": "Read the content of our CDN vendor's homepage.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of the React documentation.",
+    "groundable_unknown": "Read the content of the Kestrel SDK documentation.",
+    "ungroundable": "Read the content of our SDK's documentation.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of the Datadog blog.",
+    "groundable_unknown": "Read the content of the Riversend Analytics blog.",
+    "ungroundable": "Read the content of our analytics vendor's blog.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of the PayPal homepage.",
+    "groundable_unknown": "Read the content of the Vansgate Pay homepage.",
+    "ungroundable": "Read the content of our payment processor's homepage.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of the PyPI homepage.",
+    "groundable_unknown": "Read the content of the Pellmore Registry homepage.",
+    "ungroundable": "Read the content of our package registry's homepage.",
+    "expected_tool": "web_fetch_exa"
+  },
+  {
+    "groundable_known": "Read the content of the Hacker News front page.",
+    "groundable_unknown": "Read the content of the Wrenfield News front page.",
+    "ungroundable": "Read the content of our company news page.",
+    "expected_tool": "web_fetch_exa"
+  }
+]

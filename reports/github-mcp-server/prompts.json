@@ -1,0 +1,62 @@
+[
+  {
+    "ungroundable": "Show me the latest release of our main SDK repo.",
+    "groundable_known": "Show me the latest release of the React repo.",
+    "groundable_unknown": "Show me the latest release of the Kestrel SDK repo.",
+    "expected_tool": "get_latest_release"
+  },
+  {
+    "ungroundable": "List the open pull requests on our frontend repo.",
+    "groundable_known": "List the open pull requests on the Next.js repo.",
+    "groundable_unknown": "List the open pull requests on the Halloway UI repo.",
+    "expected_tool": "list_pull_requests"
+  },
+  {
+    "ungroundable": "Show me the recent commits to our API server repo.",
+    "groundable_known": "Show me the recent commits to the Kubernetes repo.",
+    "groundable_unknown": "Show me the recent commits to the Trellidge API repo.",
+    "expected_tool": "list_commits"
+  },
+  {
+    "ungroundable": "Get the README from our CLI tool's repo.",
+    "groundable_known": "Get the README from the ripgrep repo.",
+    "groundable_unknown": "Get the README from the Vansgate CLI repo.",
+    "expected_tool": "get_file_contents"
+  },
+  {
+    "ungroundable": "List the open issues in our docs repo.",
+    "groundable_known": "List the open issues in the TypeScript repo.",
+    "groundable_unknown": "List the open issues in the Calderwick Docs repo.",
+    "expected_tool": "list_issues"
+  },
+  {
+    "ungroundable": "What branches does our mobile app repo have?",
+    "groundable_known": "What branches does the Flutter repo have?",
+    "groundable_unknown": "What branches does the Pellmore Mobile repo have?",
+    "expected_tool": "list_branches"
+  },
+  {
+    "ungroundable": "List the tags on our infrastructure repo.",
+    "groundable_known": "List the tags on the Terraform repo.",
+    "groundable_unknown": "List the tags on the Ashcombe Infra repo.",
+    "expected_tool": "list_tags"
+  },
+  {
+    "ungroundable": "Show me the releases for our design system repo.",
+    "groundable_known": "Show me the releases for the Tailwind CSS repo.",
+    "groundable_unknown": "Show me the releases for the Riversend Design repo.",
+    "expected_tool": "list_releases"
+  },
+  {
+    "ungroundable": "Show me what's in the src directory of our analytics repo.",
+    "groundable_known": "Show me what's in the src directory of the PostHog repo.",
+    "groundable_unknown": "Show me what's in the src directory of the Wrenfield Analytics repo.",
+    "expected_tool": "get_file_contents"
+  },
+  {
+    "ungroundable": "Get the latest release of our database driver repo.",
+    "groundable_known": "Get the latest release of the Prisma repo.",
+    "groundable_unknown": "Get the latest release of the Duncastle DB driver repo.",
+    "expected_tool": "get_latest_release"
+  }
+]

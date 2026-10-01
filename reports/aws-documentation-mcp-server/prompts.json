@@ -1,0 +1,62 @@
+[
+  {
+    "groundable_known": "Read the AWS documentation page on S3 lifecycle configuration.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Kestrel Streams retention.",
+    "ungroundable": "Read the AWS documentation page for our storage service's lifecycle rules.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on Lambda function timeouts.",
+    "groundable_unknown": "Read the AWS documentation page on AWS Northbrook Functions timeouts.",
+    "ungroundable": "Read the AWS documentation page on timeouts for the compute service we use.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on DynamoDB time to live.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Halloway DB time to live.",
+    "ungroundable": "Read the AWS documentation page on time to live for our database.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on CloudFront cache behaviours.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Ashcombe Edge cache behaviours.",
+    "ungroundable": "Read the AWS documentation page on cache behaviours for our CDN setup.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on SQS visibility timeout.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Wrenfield Queue visibility timeout.",
+    "ungroundable": "Read the AWS documentation page on visibility timeout for our queue service.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on IAM policy evaluation logic.",
+    "groundable_unknown": "Read the AWS documentation page on AWS Calderwick Identity policy evaluation.",
+    "ungroundable": "Read the AWS documentation page on policy evaluation for our access setup.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on EC2 instance metadata (IMDSv2).",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Trellidge Compute instance metadata.",
+    "ungroundable": "Read the AWS documentation page on instance metadata for our servers.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on RDS automated backups.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Pellmore RDS automated backups.",
+    "ungroundable": "Read the AWS documentation page on automated backups for our database host.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on Route 53 health checks.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Riversend DNS health checks.",
+    "ungroundable": "Read the AWS documentation page on health checks for our DNS service.",
+    "expected_tool": "read_documentation"
+  },
+  {
+    "groundable_known": "Read the AWS documentation page on ECS task definitions.",
+    "groundable_unknown": "Read the AWS documentation page on Amazon Duncastle Containers task definitions.",
+    "ungroundable": "Read the AWS documentation page on task definitions for our container service.",
+    "expected_tool": "read_documentation"
+  }
+]

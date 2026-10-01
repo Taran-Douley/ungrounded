@@ -1,0 +1,62 @@
+[
+  {
+    "groundable_known": "Summarise the dashboard with UID a1b2c3d4.",
+    "groundable_unknown": "Summarise the Checkout Latency dashboard.",
+    "ungroundable": "Summarise our main dashboard.",
+    "expected_tool": "get_dashboard_summary"
+  },
+  {
+    "groundable_known": "List the panel queries on the dashboard with UID k8s-ovw-01.",
+    "groundable_unknown": "List the panel queries on the Kubernetes Overview dashboard.",
+    "ungroundable": "List the panel queries on our team's dashboard.",
+    "expected_tool": "get_dashboard_panel_queries"
+  },
+  {
+    "groundable_known": "Show the version history of the dashboard with UID pay-svc-77.",
+    "groundable_unknown": "Show the version history of the Payments Service dashboard.",
+    "ungroundable": "Show the version history of our on-call dashboard.",
+    "expected_tool": "list_dashboard_versions"
+  },
+  {
+    "groundable_known": "Get the full definition of the dashboard with UID db-perf-2.",
+    "groundable_unknown": "Get the full definition of the Database Performance dashboard.",
+    "ungroundable": "Get the full definition of our SLO dashboard.",
+    "expected_tool": "get_dashboard_by_uid"
+  },
+  {
+    "groundable_known": "List the metric names in the Prometheus datasource with UID P1809F7CD0C75ACF3.",
+    "groundable_unknown": "List the metric names in the Production Prometheus datasource.",
+    "ungroundable": "List the metric names in our metrics datasource.",
+    "expected_tool": "list_prometheus_metric_names"
+  },
+  {
+    "groundable_known": "List the label names in the Loki datasource with UID P8E80F9AEF21F6940.",
+    "groundable_unknown": "List the label names in the Production Loki datasource.",
+    "ungroundable": "List the label names in our logs datasource.",
+    "expected_tool": "list_loki_label_names"
+  },
+  {
+    "groundable_known": "Show the latest error logs from the Loki datasource with UID P8E80F9AEF21F6940.",
+    "groundable_unknown": "Show the latest error logs from the Production Loki datasource.",
+    "ungroundable": "Show the latest error logs from our logs datasource.",
+    "expected_tool": "query_loki_logs"
+  },
+  {
+    "groundable_known": "What's the current value of sum(rate(http_requests_total[5m])) in the Prometheus datasource with UID P1809F7CD0C75ACF3?",
+    "groundable_unknown": "What's the current value of sum(rate(http_requests_total[5m])) in the Production Prometheus datasource?",
+    "ungroundable": "What's the current value of sum(rate(http_requests_total[5m])) in our metrics datasource?",
+    "expected_tool": "query_prometheus"
+  },
+  {
+    "groundable_known": "List the trace attribute names in the Tempo datasource with UID P214B5B846CF3925F.",
+    "groundable_unknown": "List the trace attribute names in the Production Tempo datasource.",
+    "ungroundable": "List the trace attribute names in our tracing datasource.",
+    "expected_tool": "list_tempo_attribute_names"
+  },
+  {
+    "groundable_known": "List the label names in the Prometheus datasource with UID PBFA97CFB590B2093.",
+    "groundable_unknown": "List the label names in the Staging Prometheus datasource.",
+    "ungroundable": "List the label names in our staging metrics datasource.",
+    "expected_tool": "list_prometheus_label_names"
+  }
+]
