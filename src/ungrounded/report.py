@@ -85,7 +85,7 @@ class Scorecard:
     unfamiliar: Optional[float]      # correct-tool rate, named unfamiliar entity
     ci_grounded: Tuple[float, float]
     ci_ungrounded: Tuple[float, float]
-    decoy_ungrounded: Optional[float]  # misselection rate, unnamed referent
+    decoy_ungrounded: Optional[float]  # decoy invocation rate, unnamed referent
     gap_pp: Optional[float]
     retention: Optional[float]
     p: float

@@ -4,7 +4,7 @@ These are the exact strings used in Studies 3 and 4 (harnesses/exp3.py), so a
 run with the default set is a direct replication.
 
 Each holds the task constant and varies only the referent. Use them to get a
-number quickly, then replace them -- an agent's misselection rate depends on
+number quickly, then replace them -- an agent's routing depends on
 the requests it actually receives, and these are generic infrastructure
 queries. ``ungrounded template`` writes a starting file.
 """

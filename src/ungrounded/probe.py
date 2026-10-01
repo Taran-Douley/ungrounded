@@ -113,9 +113,14 @@ class Result:
                 agg[t.condition].append(int(v))
         return dict(agg)
 
-    def misselection_rate(self, condition: str) -> float:
+    def decoy_rate(self, condition: str) -> float:
+        """Share of trials in ``condition`` that invoked the decoy, in percent."""
         vals = self.by_condition().get(condition, [])
         return rate(sum(vals), len(vals))
+
+    def misselection_rate(self, condition: str) -> float:
+        """Deprecated alias for :meth:`decoy_rate`, kept for 0.2.x callers."""
+        return self.decoy_rate(condition)
 
     def ci(self, condition: str, field: str = "decoy_called"):
         per = defaultdict(list)
@@ -164,7 +169,7 @@ class Result:
         if self.decoy_name:
             L.append(f"  decoy tool: {self.decoy_name}")
         L.append("")
-        L.append("  MISSELECTION RATE  (decoy invoked, by grounding condition)")
+        L.append("  DECOY INVOKED  (by referent condition)")
         L.append(f"  {'condition':<22}{'rate':>9}   {'95% CI (clustered)':>22}")
         L.append("  " + "-" * 56)
         labels = {
@@ -225,7 +230,7 @@ class Result:
             "config": self.config,
             "n_triples": self.n_triples,
             "n_trials": len(self._ok()),
-            "rates": {c: self.misselection_rate(c) for c in CONDITIONS
+            "rates": {c: self.decoy_rate(c) for c in CONDITIONS
                       if self.by_condition().get(c)},
             "correct_tool_rates": {c: rate(sum(v), len(v))
                                    for c, v in exp.items() if v},
@@ -240,15 +245,16 @@ class Result:
 
 
 class Probe:
-    """Measure tool misselection under entity grounding failure.
+    """Measure how tool routing shifts when an entity in a request can't be resolved.
 
         from ungrounded import Probe
         r = Probe(model="claude-sonnet-4-6", tools=MY_TOOLS).run()
         print(r.summary())
 
     ``tools`` takes your real catalogue in Anthropic or OpenAI schema. A decoy
-    is injected -- a tool nothing in the stimulus set should call -- so that
-    misselection is observable without a ground-truth trajectory per call.
+    is injected -- a tool none of the stimuli needs -- so that routing towards it
+    is observable without a ground-truth trajectory per call. An invocation is
+    not automatically an error.
     Tool order is shuffled every trial so position cannot confound condition.
     """
 

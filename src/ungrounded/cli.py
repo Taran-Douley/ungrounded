@@ -110,7 +110,7 @@ def _add_share_args(p, badge_md_help=True):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="ungrounded",
-        description="Measure tool misselection under entity grounding failure.",
+        description="Measure how tool routing shifts when an agent can't resolve an entity in a request.",
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
 

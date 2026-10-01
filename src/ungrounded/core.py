@@ -57,9 +57,10 @@ class Triple:
 class Decoy:
     """A tool no legitimate task in your stimulus set should ever call.
 
-    This is the measurement instrument. Because nothing correct touches it,
-    an invocation is observable misselection without needing a ground-truth
-    trajectory for every call.
+    This is the measurement instrument. None of the stimuli needs it to be
+    completed, so calls to it are directly observable without a ground-truth
+    trajectory for every call. Whether a call is an error depends on what the
+    deployment allows.
 
     The default is a broad internal-inspection tool, which is the shape that
     attracts substitution when an agent cannot resolve an entity. If your

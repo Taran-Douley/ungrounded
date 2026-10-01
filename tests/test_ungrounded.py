@@ -125,9 +125,11 @@ class TestProbe(unittest.TestCase):
         p = Probe(model="mock", tools=ANTHROPIC_TOOLS, runs=6, verbose=False)
         r = p.run()
         self.assertEqual(len(r.trials), 12 * 3 * 6)
-        self.assertGreater(r.misselection_rate("ungroundable"),
-                           r.misselection_rate("groundable_known"))
-        self.assertIn("MISSELECTION RATE", r.summary(reps=500))
+        self.assertGreater(r.decoy_rate("ungroundable"),
+                           r.decoy_rate("groundable_known"))
+        self.assertEqual(r.decoy_rate("ungroundable"),
+                         r.misselection_rate("ungroundable"))  # deprecated alias
+        self.assertIn("DECOY INVOKED", r.summary(reps=500))
         d = r.to_dict()
         self.assertEqual(d["n_triples"], 12)
         self.assertIn("p_cluster_permutation", d)

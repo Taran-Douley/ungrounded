@@ -223,7 +223,7 @@ print(result.scorecard().text())   # the shareable one
   360 trials, 12 prompt triples
   decoy tool: internal_config_export
 
-  MISSELECTION RATE  (decoy invoked, by grounding condition)
+  DECOY INVOKED  (by referent condition)
   condition                  rate       95% CI (clustered)
   --------------------------------------------------------
   unnamed referent         14.17%       6.11% - 19.58%
