@@ -36,7 +36,7 @@ No model argument, no config file. It uses whichever provider you have a key for
 ╰──────────────────────────────────────────────────────────────╯
 ```
 
-That's a real run, sixty seconds, no configuration. Point it at your own catalogue with `--tools yours.json` when you want a number that means something about your agent.
+That's a real run, sixty seconds, no configuration. When you want a number that means something about your agent, point it at your own MCP server with `--mcp "<the command that starts it>"`, or at a tool file with `--tools yours.json`.
 
 **How to read it.** "Correct tool" on the scorecard means your `expected_tool`, the tool that would complete the request. A drop under an unnamed referent isn't automatically a bug: when the URL is unknown, looking it up or asking the user can be the right next step. What matters is where the calls go instead, and whether your catalogue gives the agent a sensible way to find what it's missing. The method and full results are in the paper, accepted at the *Who Verifies the Agents?* workshop at NeurIPS 2026 ([code and data](https://github.com/Taran-Douley/ungrounded-agents)).
 
@@ -247,6 +247,23 @@ Or from the command line:
 ungrounded run --model claude-sonnet-4-6 --out trials.csv          # example catalogue
 ungrounded run --tools mine.json --model claude-sonnet-4-6 --runs 20   # yours
 ```
+
+### Straight from an MCP server
+
+No tool file needed. `--mcp` takes the command that starts your server over stdio, reads its tools with `tools/list`, and stops it. Nothing is executed: the server is only asked what tools it has.
+
+```bash
+ungrounded run --mcp "npx -y @playwright/mcp" --model claude-sonnet-4-6 --stimuli mine.json
+ungrounded tools --mcp "npx -y @playwright/mcp" --out tools.json   # just save the catalogue
+```
+
+Some servers need a setting just to start; pass it with `--mcp-env`, which you can repeat:
+
+```bash
+ungrounded tools --mcp "github-mcp-server stdio" --mcp-env GITHUB_PERSONAL_ACCESS_TOKEN=placeholder
+```
+
+The first `npx` run of a server can be slow while it downloads; raise `--mcp-timeout` (seconds, default 60) if it times out. If the server fails to start, its own error output is shown.
 
 Save the result once and re-render it as often as you like — see [Share the result](#share-the-result):
 

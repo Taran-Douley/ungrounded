@@ -4,6 +4,11 @@
     ungrounded template > stimuli.json
     ungrounded run --tools tools.json --stimuli stimuli.json --runs 10 --out trials.csv
 
+Straight from an MCP server, no tools.json needed:
+
+    ungrounded run --mcp "npx -y @playwright/mcp" --model claude-sonnet-4-6
+    ungrounded tools --mcp "npx -y @playwright/mcp" --out tools.json
+
 Sharing what came out:
 
     ungrounded run --model M --save r.json --card card.svg --badge badge.svg
@@ -44,6 +49,29 @@ def _load_triples(path: str) -> List[Triple]:
             )
         )
     return out
+
+
+def _add_mcp_args(p, required=False):
+    p.add_argument("--mcp", metavar="COMMAND", required=required,
+                   help="the command that starts your MCP server over stdio, in quotes, "
+                        "e.g. \"npx -y @playwright/mcp\". Its tools are read with "
+                        "tools/list; none are executed.")
+    p.add_argument("--mcp-env", metavar="KEY=VALUE", action="append",
+                   help="environment variable for the MCP server (repeatable). Some "
+                        "servers need a placeholder token just to start.")
+    p.add_argument("--mcp-timeout", type=float, default=60.0, metavar="SECONDS",
+                   help="how long to wait for each server response (default 60; npx "
+                        "may need longer the first time it downloads a server)")
+
+
+def _mcp_tools(a, quiet=False):
+    from .mcp import list_tools, parse_env
+    if not quiet:
+        print(f"  starting MCP server: {a.mcp}", file=sys.stderr)
+    tools = list_tools(a.mcp, env=parse_env(a.mcp_env), timeout=a.mcp_timeout)
+    if not quiet:
+        print(f"  read {len(tools)} tools from the server", file=sys.stderr)
+    return tools
 
 
 def _load_result(path: str) -> dict:
@@ -119,10 +147,19 @@ def main(argv=None) -> int:
                    help="print the twelve built-in triples instead of a blank template")
 
     r = sub.add_parser("run", help="run the probe")
-    r.add_argument("--tools",
+    src = r.add_mutually_exclusive_group()
+    src.add_argument("--tools",
                    help="JSON file: your tool catalogue (Anthropic or OpenAI schema). "
                         "Defaults to the paper's ten-tool example catalogue so you can "
                         "get a number before wiring up your own.")
+    src.add_argument("--mcp", metavar="COMMAND",
+                     help="read the catalogue from your MCP server instead of a file: "
+                          "the command that starts it over stdio, in quotes, e.g. "
+                          "\"npx -y @playwright/mcp\". Its tools are listed, never executed.")
+    r.add_argument("--mcp-env", metavar="KEY=VALUE", action="append",
+                   help="environment variable for the MCP server (repeatable)")
+    r.add_argument("--mcp-timeout", type=float, default=60.0, metavar="SECONDS",
+                   help="how long to wait for each MCP server response (default 60)")
     r.add_argument("--model",
                    help="e.g. claude-sonnet-4-6, gpt-5.6-terra, or 'mock' to test "
                         "plumbing. Omit it and whichever provider you have "
@@ -160,6 +197,11 @@ def main(argv=None) -> int:
     b.add_argument("--link", default=REPO, help="where the badge links to")
     b.add_argument("--url", action="store_true", help="print the shields.io URL only")
 
+    tl = sub.add_parser("tools", help="read the tool catalogue from an MCP server")
+    _add_mcp_args(tl, required=True)
+    tl.add_argument("--out", metavar="FILE.json",
+                    help="write the catalogue here (default: print it)")
+
     sub.add_parser("doctor", help="check what is configured and working")
 
     su = sub.add_parser("submit", help="turn a saved result into a leaderboard entry")
@@ -186,6 +228,15 @@ def main(argv=None) -> int:
 
     if a.cmd == "doctor":
         return _doctor()
+
+    if a.cmd == "tools":
+        tools = _mcp_tools(a)
+        text = json.dumps(tools, indent=2) + "\n"
+        if a.out:
+            _write(a.out, text, f"{len(tools)} tools")
+        else:
+            print(text, end="")
+        return 0
 
     if a.cmd == "card":
         d = _load_result(a.result)
@@ -235,13 +286,16 @@ def main(argv=None) -> int:
     from .providers import resolve_provider
     provider = resolve_provider(a.model)
 
-    if a.tools:
+    if a.mcp:
+        tools = _mcp_tools(a, quiet=a.quiet)
+    elif a.tools:
         with open(a.tools, encoding="utf-8") as fh:
             tools = json.load(fh)
     else:
         tools = example_catalogue()
         print("  using the built-in example catalogue "
-              "(pass --tools yours.json to measure your own)", file=sys.stderr)
+              "(pass --tools yours.json or --mcp \"<server command>\" to measure "
+              "your own)", file=sys.stderr)
     if isinstance(tools, dict) and "tools" in tools:
         tools = tools["tools"]
 
