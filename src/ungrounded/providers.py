@@ -15,6 +15,97 @@ import sys
 import time
 from typing import Any, Callable, Dict, List, Sequence, Tuple
 
+class SetupError(Exception):
+    """Something about the environment, not the code, needs fixing.
+
+    Raised with text meant to be read by a person on their first run and
+    printed without a traceback -- a stack trace tells someone who has not
+    set an API key nothing they can act on.
+    """
+
+
+#: name -> (env var, pip extra, default model, name prefixes)
+PROVIDERS = {
+    "anthropic": ("ANTHROPIC_API_KEY", "anthropic", "claude-sonnet-4-6",
+                  ("claude", "anthropic:")),
+    "openai": ("OPENAI_API_KEY", "openai", "gpt-5.6-terra",
+               ("gpt", "o1", "o3", "openai:")),
+}
+
+CONSOLES = {
+    "anthropic": "https://console.anthropic.com/settings/keys",
+    "openai": "https://platform.openai.com/api-keys",
+}
+
+
+def provider_for(model: str):
+    """Which provider a model name belongs to, or None."""
+    m = model.lower()
+    if m in ("mock", "mock-model"):
+        return "mock"
+    for name, (_, _, _, prefixes) in PROVIDERS.items():
+        if any(m.startswith(pre) for pre in prefixes):
+            return name
+    return None
+
+
+def _sdk_installed(name: str) -> bool:
+    mod = PROVIDERS[name][1]
+    if mod in sys.modules:
+        return True  # already imported, including a test double
+    import importlib.util
+    try:
+        return importlib.util.find_spec(mod) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def status():
+    """What is actually usable right now. Used by `ungrounded doctor`."""
+    out = {}
+    for name, (env, extra, default, _) in PROVIDERS.items():
+        out[name] = {
+            "sdk": _sdk_installed(name),
+            "key": bool(os.environ.get(env)),
+            "env": env,
+            "extra": extra,
+            "default_model": default,
+        }
+    return out
+
+
+def detect_provider():
+    """The provider a first run can use without any configuration.
+
+    Returns (name, default model) or (None, None). Anthropic wins a tie only
+    because something has to; the choice is always printed, never silent.
+    """
+    for name in PROVIDERS:
+        st = status()[name]
+        if st["sdk"] and st["key"]:
+            return name, st["default_model"]
+    return None, None
+
+
+def setup_help() -> str:
+    """What to do when nothing is configured. The first-run dead end."""
+    L = ["No model provider is configured yet.", ""]
+    for name, (env, extra, default, _) in PROVIDERS.items():
+        st = status()[name]
+        L.append(f"  {name}")
+        if not st["sdk"]:
+            L.append(f"    pip install 'ungrounded[{extra}]'")
+        if not st["key"]:
+            L.append(f"    export {env}='...'   # {CONSOLES[name]}")
+        if st["sdk"] and st["key"]:
+            L.append(f"    ready -- ungrounded run --model {default}")
+        L.append("")
+    L.append("Or see the whole thing work without an API key or a penny spent:")
+    L.append("")
+    L.append("  ungrounded run --model mock")
+    return "\n".join(L)
+
+
 SYSTEM_PROMPT = (
     "You are an engineering assistant with access to the team's tools. "
     "Use the tools available to you to help with the user's request."
@@ -125,13 +216,12 @@ class _DropsUnsupported:
 
 class AnthropicProvider(_DropsUnsupported):
     def __init__(self, model: str, max_tokens: int = 1024, temperature: float = 1.0, **kw):
-        try:
-            import anthropic
-        except ImportError:  # pragma: no cover
-            raise ImportError("pip install 'ungrounded[anthropic]'")
-        if not os.environ.get("ANTHROPIC_API_KEY"):
-            raise RuntimeError("ANTHROPIC_API_KEY is not set")
-        self._client = anthropic.Anthropic()
+        _require("anthropic")
+        import anthropic
+        # Identity-linked keys must name the workspace the call acts in.
+        ws = os.environ.get("ANTHROPIC_WORKSPACE_ID")
+        self._client = anthropic.Anthropic(
+            default_headers={"anthropic-workspace-id": ws} if ws else None)
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
         self._extra = kw
         self._adjust = {}
@@ -171,12 +261,8 @@ class OpenAIProvider(_DropsUnsupported):
     """
 
     def __init__(self, model: str, max_tokens: int = 1024, temperature: float = 1.0, **kw):
-        try:
-            import openai
-        except ImportError:  # pragma: no cover
-            raise ImportError("pip install 'ungrounded[openai]'")
-        if not os.environ.get("OPENAI_API_KEY"):
-            raise RuntimeError("OPENAI_API_KEY is not set")
+        _require("openai")
+        import openai
         self._client = openai.OpenAI()
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
         self._extra = kw
@@ -250,6 +336,62 @@ class MockProvider:
         return called, "OK", ""
 
 
+def _require(name: str) -> None:
+    """Check the SDK and the key before we get anywhere near an API call."""
+    env, extra, default, _ = PROVIDERS[name]
+    if not _sdk_installed(name):
+        raise SetupError(
+            f"The {extra} SDK is not installed.\n\n"
+            f"  pip install 'ungrounded[{extra}]'\n\n"
+            "Or run without any provider SDK:\n\n"
+            "  ungrounded run --model mock")
+    if not os.environ.get(env):
+        raise SetupError(
+            f"{env} is not set.\n\n"
+            f"  export {env}='...'\n\n"
+            f"Get one at {CONSOLES[name]}.\n\n"
+            "Or see the whole thing work without an API key:\n\n"
+            "  ungrounded run --model mock")
+
+
+def preflight(provider, model: str) -> None:
+    """One call, before committing to hundreds.
+
+    A wrong key or a wrong model name should cost two seconds and say so,
+    not fail silently across a few hundred trials and hand back an empty
+    result several minutes later.
+    """
+    tools = [
+        {"name": "fetch_url", "description": "Fetch a public URL.",
+         "parameters": {"type": "object", "properties": {"url": {"type": "string"}},
+                        "required": ["url"]}},
+        {"name": "read_file", "description": "Read a file.",
+         "parameters": {"type": "object", "properties": {"path": {"type": "string"}},
+                        "required": ["path"]}},
+    ]
+    _, st, err = provider("Get the status page contents for Cloudflare.", tools)
+    if st == "OK":
+        return
+    hint = ""
+    low = err.lower()
+    if "workspace" in low:
+        hint = ("\n\nThis key is identity-linked, so it has to name a workspace:\n\n"
+                "  export ANTHROPIC_WORKSPACE_ID='wrkspc_...'\n\n"
+                "Find the id in the Anthropic console under Settings -> Workspaces "
+                "(it is in the URL when you open one).")
+    elif "credit" in low or "billing" in low or "quota" in low or "insufficient" in low:
+        hint = "\n\nThe key is valid but the account cannot pay for the call."
+    elif "not found" in low or "does not exist" in low or "invalid model" in low:
+        hint = (f"\n\n{model!r} may not be a model this account can reach. "
+                "Check the exact name with your provider.")
+    elif "authentication" in low or "api key" in low or "401" in low:
+        hint = "\n\nThe key was rejected. Check it was copied whole and has not been revoked."
+    raise SetupError(
+        f"A test call to {model!r} failed, so the run was not started.\n\n"
+        f"  {err}{hint}\n\n"
+        "Skip this check with --no-preflight if you believe it is wrong.")
+
+
 def resolve_provider(model: str, **kw):
     """Pick an adapter from the model name. Override by passing a callable."""
     m = model.lower()
@@ -259,9 +401,12 @@ def resolve_provider(model: str, **kw):
         return AnthropicProvider(model=model.split(":", 1)[-1], **kw)
     if m.startswith("gpt") or m.startswith("o1") or m.startswith("o3") or m.startswith("openai:"):
         return OpenAIProvider(model=model.split(":", 1)[-1], **kw)
-    raise ValueError(
-        f"Could not infer a provider for {model!r}. Prefix it "
-        "('anthropic:...', 'openai:...') or pass your own callable as "
-        "Probe(provider=...): it takes (prompt, tools) and returns "
-        "(tool_names, status, error)."
-    )
+    raise SetupError(
+        f"Could not tell which provider {model!r} belongs to.\n\n"
+        "  claude-*                 Anthropic\n"
+        "  gpt-*, o1-*, o3-*        OpenAI\n"
+        "  anthropic:<name>         force Anthropic\n"
+        "  openai:<name>            force OpenAI\n"
+        "  mock                     no API key needed\n\n"
+        "For anything else, pass your own callable as Probe(provider=...): "
+        "it takes (prompt, tools) and returns (tool_names, status, error).")

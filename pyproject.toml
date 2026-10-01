@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ungrounded"
-version = "0.2.2"
-description = "Measure how often your LLM agent reaches for the wrong tool when it cannot ground an entity in a request."
+version = "0.3.0"
+description = "Measure whether your LLM agent keeps using the tool that completes a request when it cannot resolve an entity in that request."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
