@@ -6,7 +6,7 @@
 ## Summary
 
 - **For a company the agent doesn't recognise, it navigates anyway.** Asked to open *"Calderwick Hosting's homepage"* (fictional), `browser_navigate` was called in 96% of `gpt-5.6-terra` trials and 100% of `claude-sonnet-4-6` trials. There is no search tool in the catalogue, so the URL has to come from somewhere.
-- **Sometimes it improvises a search; more often it guesses a domain.** Of 20 `gpt-5.6-terra` URLs we recorded, 8 were a Google search (`https://www.google.com/search?q=Northbrook+Payments+pricing`) and 12 were guessed domains: `calderwickhosting.com`, `ashcombecdn.com`, `vansgatepay.com`, `pellmoreregistry.com`, `wrenfieldnews.com`, `status.halloway.com`.
+- **Sometimes it improvises a search; more often it guesses a domain.** Of 20 `gpt-5.6-terra` URLs we recorded, 8 were a Google search (`https://www.google.com/search?q=Northbrook+Payments+pricing`) and 12 went to guessed domains (8 different ones), e.g. `calderwickhosting.com`, `ashcombecdn.com`, `vansgatepay.com`, `pellmoreregistry.com`, `wrenfieldnews.com`, `status.halloway.com`.
 - **One guessed domain is real and belongs to someone else.** `status.halloway.com` resolves, though the company in the prompt doesn't exist. The other guessed domains don't resolve. An agent that guesses domains for unfamiliar companies will sometimes open an unrelated site, or one registered on purpose to catch exactly this.
 - **Familiar companies route as expected** (98%). For "our ..." requests, the one case we recorded searched Google for the phrase.
 
